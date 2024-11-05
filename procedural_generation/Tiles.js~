@@ -1,0 +1,106 @@
+class Tiles
+{
+    constructor(initial_tile)
+    {
+	this.grid = []
+	for (let i = 0; i < ROWS; i++) {
+	    var row = []
+	    for (let j = 0; j < COLS; j++) {
+		if (i === initial_tile.i && j === initial_tile.j) row.push(initial_tile)
+		else {
+		    let t = new Tile(i, j)
+		    row.push(t)
+		}
+	    }
+	    this.grid.push(row)
+	}
+	this.openTiles = []
+	this.current = initial_tile
+    }
+
+    get(i, j) { return this.grid[i][j] }
+
+    nextTile()
+    {
+	//console.log("Open tiles:", this.openTiles)
+	let next_tile = null
+	if (this.openTiles.length >= 0) {
+	    //let i = floor(random(this.openTiles.length))
+	    let i = 0
+	    //let i = this.openTiles.length-1
+	    next_tile = this.openTiles.splice(i, 1)[0]
+	}
+	this.current.open = false
+	this.current.isCurrent = false
+	this.current = next_tile
+	if (this.current) this.current.isCurrent = true
+    }
+
+    generate_next()
+    {
+	//console.log("current:", this.current)
+	if (this.current) {
+	    let neighbours = this.current.getValidNeighbours()
+	    for (let k = 0; k < neighbours.length; k++) {
+		let neighbour = neighbours[k]
+		if (neighbour && k !== 4) {
+		    neighbour.chooseType(this.current.type, k)
+		    if (!neighbour.open) {
+			this.openTiles.push(neighbour)
+			neighbour.open = true
+		    }
+		}
+	    }
+	    this.current.done = true
+	    this.nextTile()
+	    //console.log("next:", this.current)
+	}
+	else {
+	    console.log("Finito")
+	    this.validate()
+	    noLoop()
+	}
+    }
+
+    // generate_all()
+    // {
+    // 	while (this.current) {
+    // 	    let neighbours = this.getValidneighbours()
+    // 	    for (let k = 0; k < neighbours.length; k++) {
+    // 		let neighbour = neighbours[k]
+    // 		if (neighbour && k !== 4) {
+    // 		    neighbour.chooseType(this.current.type, k)
+    // 		    this.openTiles.push(neighbour)
+    // 		}
+    // 	    }
+    // 	    tile.done = true
+    // 	    tile = nextTile()
+    // 	}
+    // 	console.log("Finito")
+    // }
+
+    validate()
+    {
+	for (let i = 0; i < ROWS; i++) {
+	    for (let j = 0; j < COLS; j++) {
+		let tile = this.get(i, j)
+		tile.isScanning = true
+		let neighbours = tile.getNeighbours()
+		let type_rules = rules[tile.type]
+		for (let k = 0; k < neighbours.length; k++) {
+		    let neighbour = neighbours[k]
+		    if (!neighbour) continue
+		    else console.log(neighbour)
+		    let expected_types = type_rules[k]
+		    for (let t of expected_types) {
+			if (t !== neighbour.type) {
+			    console.log(`NUP`)
+			} else console.log("Good")
+		    }
+		}
+		tile.isScanning = false
+	    }
+	}
+    }
+
+}
