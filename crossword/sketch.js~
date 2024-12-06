@@ -1,0 +1,12 @@
+// Title: "crossword"
+// Created: ven 6 dic 2024, 12:34:38, CET
+
+function setup()
+{
+  createCanvas(600, 600);
+}
+
+function draw()
+{
+  background(50, 180, 0);
+}

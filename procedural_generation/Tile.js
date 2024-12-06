@@ -31,14 +31,14 @@ const rules_1 = {
 }
 const rules_2 = {
     sand: [
-	[s, c], [s], [s],
-	[s, c], [s],    [s],
-	[s, c], [s], [s]
+	[s],  [s,c], [s],
+	[s, c], [s],    [s,c],
+	[s],    [s, c], [s]
     ],
     sea: [
-	[c, s], [c], [c],
-	[c, s], [c], [c],
-	[c, s], [c], [c]
+	[c], [c,s], [c],
+	[c,s],    [c], [c, s],
+	[c], [c,s], [c]
     ]
 }
 const rules = rules_2
@@ -63,11 +63,11 @@ class Tile
 	push()
 	noStroke()
 	if (this.type) {
-	    //stroke(0)
+	    stroke(0)
 	    fill(TILE_COLS[this.type])
 	}
 	else {
-	    //stroke(255)
+	    stroke(255)
 	    fill(TILE_COL_NOTYPE)
 	}
 	rect(this.i*W, this.j*H, W, H)

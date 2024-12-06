@@ -15,13 +15,14 @@ class Tiles
 	    this.grid.push(row)
 	}
 	this.openTiles = []
+	this.tilesToScan = []
 	this.current = initial_tile
 	this.generating = true
     }
 
     get(i, j) { return this.grid[i][j] }
 
-    nextTile()
+    nextOpenTile()
     {
 	//console.log("Open tiles:", this.openTiles)
 	let next_tile = null
@@ -35,6 +36,16 @@ class Tiles
 	this.current.isCurrent = false
 	this.current = next_tile
 	if (this.current) this.current.isCurrent = true
+    }
+
+    nextTileToScan()
+    {
+	let next_tile = null
+	if (this.tilesToScan.length >= 0) {
+	    next_tile = this.tilesToScan.splice(0, 1)[0]
+	}
+	this.current = next_tile
+	if (this.current) this.current.isScanning = true
     }
 
     generate_next()
@@ -52,50 +63,88 @@ class Tiles
 		    }
 		}
 	    }
-	    this.current.done = true
-	    this.nextTile()
+	    this.nextOpenTile()
 	    //console.log("next:", this.current)
 	}
 	else {
 	    this.generating = false
-	    console.log("Finito")
-	    this.validate()
-	    noLoop()
+	    console.log("Generation ended")
+	    let rand_i = floor(random(ROWS))
+	    let rand_j = floor(random(COLS))
+	    this.current = this.get(rand_i, rand_j)
+	    this.current.isScanning = true
 	}
     }
 
     generate_all()
     {
-	while (this.current) this.generate_next()
+	while (this.current && !this.current.isScanning) this.generate_next()
 	this.generating = false
-	console.log("Finito")
-	//this.validate()
+	console.log("Generation ended")
+	//this.validate_all()
 	noLoop()
     }
 
+    fix(tile_to_fix)
+    {
+	var neighbours = tile_to_fix.getNeighbours()
+	var valid_types = new Set([...TileTypes])
+	for (let n of neighbours) {
+	    if (!n || (this.current.i === n.i && this.current.j === n.j)) continue
+	    for (let i = 0; i < rules[n.type].length; i++) {
+		let n_rules = new Set([...rules[n.type][i]])
+		valid_types = valid_types.intersection(n_rules)
+	    }
+	}
+	console.log("valid types:", valid_types)
+	if (valid_types.size > 0) {
+	    let rand_i = Math.floor(random(valid_types.size))
+	    let rand_type = Array.from(valid_types)[rand_i]
+	    tile_to_fix.type = rand_type
+	}
+	tile_to_fix.done = true
+    }
+    
     validate_next()
     {
-	alert("TODO")
-	for (let i = 0; i < ROWS; i++) {
-	    for (let j = 0; j < COLS; j++) {
-		let tile = this.get(i, j)
-		tile.isScanning = true
-		let neighbours = tile.getNeighbours()
-		let type_rules = rules[tile.type]
-		for (let k = 0; k < neighbours.length; k++) {
-		    let neighbour = neighbours[k]
-		    if (!neighbour) continue
-		    else console.log(neighbour)
-		    let expected_types = type_rules[k]
-		    for (let t of expected_types) {
-			if (t !== neighbour.type) {
-			    console.log(`NUP`)
-			} else console.log("Good")
-		    }
+	if (this.current) {
+	    let neighbours = this.current.getNeighbours()
+	    //console.log(` validating (${this.current.i},${this.current.j})`)
+	    let type_rules = rules[this.current.type]
+	    for (let k = 0; k < neighbours.length; k++) {
+		let neighbour = neighbours[k]
+		if (!neighbour || neighbour.done || k === 4) continue
+		else {
+		    //console.log("scanning neighbour", neighbour)
+		    this.tilesToScan.push(neighbour)
 		}
-		tile.isScanning = false
+		let expected_types = type_rules[k]
+		var valid = false
+		for (let t of expected_types) {
+		    const equals = t === neighbour.type
+		    valid |= equals
+		}
+		if (!valid) {
+		    console.error(`Neighbour (${neighbour.i},${neighbour.j}):\n- expected: ${expected_types}\n- got ${neighbour.type}`)
+		    console.log("old type:", neighbour.type)
+		    //this.fix(neighbour)
+		    // approccio naive
+		    neighbour.type = expected_types[Math.floor(random(expected_types.length))]
+		    neighbour.done = true
+		    //
+		    console.log("new type:", neighbour.type)
+		} else neighbour.done = true
 	    }
+	    this.current.done = true
+	    this.current.isScanning = false
+	    this.nextTileToScan()
+	    return false
+	} else {
+	    console.log("Validation ended")
+	    noLoop()
+	    return true
 	}
     }
 
+    
 }

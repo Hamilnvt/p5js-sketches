@@ -6,7 +6,7 @@
  *  - Tiles potrebbe avere sia le regole sia l'ordine in cui togliere da openTiles (inizio, fine, random)
 */
 
-const N = 5
+const N = 10
 const ROWS = N
 const COLS = N
 var W
@@ -31,7 +31,7 @@ function setup()
     initial_tile.isCurrent = true
     tiles = new Tiles(initial_tile)
 
-    frameRate(5)
+    //frameRate(25)
 }
 
 function showNums()
@@ -61,15 +61,25 @@ function showTiles()
     }
 }
 
+var valid = false
 function draw()
 {
     //tiles.generate_all()
     
     showTiles()
-    //showNums()
+    showNums()
 
-    if (tiles.generating) tiles.generate_next()
-    else tiles.validate_next
+    if (tiles.generating) {
+	frameRate()
+	tiles.generate_next()
+    }
+    else {
+	frameRate()
+	if (!valid) {
+	    
+	    valid = tiles.validate_next()
+	}
+    }
 }
 
 function keyPressed()

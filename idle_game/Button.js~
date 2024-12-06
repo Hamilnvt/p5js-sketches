@@ -1,0 +1,46 @@
+const PROVA_BASE = [0, 50, 0, 255]
+
+class Button
+{
+    constructor(x, y, w, h, label, vars, callback)
+    {
+	this.pos = createVector(x, y)
+	this.w = w
+	this.h = h
+	this.vars = vars
+	this.label = label
+	this.label = this.format_label()
+	this.click = callback
+    }
+
+    format_label()
+    {
+	var formatted_label = this.label
+	const splitted = this.label.split('$')
+	console.log("splitted:", splitted)
+	for (let i = 0; i < splitted.length; i++) {
+	    let k = splitted[i][0]
+	    let v = this.vars[k]
+	    if (v) console.log(v)
+	}
+	return formatted_label
+    }
+    
+    show()
+    {
+	push()
+	text(this.label, this.pos.x, this.pos.y)
+	fill(PROVA_BASE)
+	rect(this.pos.x, this.pos.y, this.w, this.h)
+	pop()
+    }
+
+    isMouseOver()
+    {
+	return (mouseX > this.pos.x &&
+		mouseX < this.pos.x + this.w &&
+		mouseY > this.pos.y &&
+		mouseY < this.pos.y + this.h)
+    }
+
+}
