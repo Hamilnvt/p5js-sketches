@@ -2,108 +2,93 @@
 // Created: ven 6 dic 2024, 12:34:38, CET
 
 //https://stackoverflow.com/questions/943113/algorithm-to-generate-a-crossword
+//https://en.wikipedia.org/wiki/Crossword#Construction
+//https://www.baeldung.com/cs/generate-crossword-puzzle
+
+// sarebbe carino mettere i cruciverba in un albero (non necessario)
 
 var words = []
-
-var WIDTH
-var HEIGHT
-var grid = []
-var cell_dim
+var crosswords = []
+const CANVAS_DIM = 600
 
 function createWord(cue, answer)
 {
-    answer = answer.toUpperCase()
+    answer = answer.toUpperCase().split(' ').join('')+"/"
     const word = { cue, answer }
     words.push(word)
 }
 
-const leParoleDiCiccio = () => {
-    words = []
-    createWord("Deh", "Peffozza")
-    createWord("Deserved for", "Ranged_top")
-    createWord("Jujutsu Kaisen", "Vaffanculo")
+const pocheParole = () => {
+    createWord("", "ciao")
+    createWord("", "miao")
+    createWord("", "caio")
+    createWord("", "maio")
+}
 
-    words.sort((a,b) => b.answer.length - a.answer.length)
+const leParoleDiCiccio = () => {
+    createWord("Deh", "Peffozza")
+    createWord("Deserved for", "Ranged top")
+    createWord("Jujutsu Kaisen", "Vaffanculo")
+    //createWord("叔叔生物", "shushushengwu")
+    //createWord("Cosa?", "delle patatine")
+    //createWord("Non si sente quando Ciccio parla", "accento")
+    //createWord("Pong", "ping")
+    //createWord("Seducente tennistavolista", "Ago")
+    //createWord("Ciccio Cavaliere Vacuo", "hxllw")
+    //createWord("Addosso", "cacati")
+    //createWord("Colori per gamberi", "cinque")
+    //createWord("Tazze per pollo", "tre")
+    //createWord("Tratto in comune con Milly", "stitichezza")
+    //createWord("Il toplaner più forte", "Darius")
+    //createWord("Sei stanco e _?", "affaticato")
+    //createWord("Anche se questa panchina è di ferro, posso assicurarti che è molto _", "confortevole")
+    //createWord("Non esiste posto migliore per raccogliere i propri pensieri prima di _", "ripartire")
+    //createWord("GOAT di Hollow Knight", "Cornifer")
+    //createWord("Insettini primordiali che devono esplodere", "aspidi")
+    //createWord("Boss HK di merda", "KNG")
+    //createWord("Il quinto che non hai ancora finito", "pantheon")
+    //createWord("Nel modo in cui statuiva il pater familiae", "CVPR")    
 }
 
 function setup()
 {
-    createCanvas(600, 600)
+    createCanvas(CANVAS_DIM, CANVAS_DIM)
     
-    leParoleDiCiccio()
-    console.log(words)
+    words = []
+    //leParoleDiCiccio()
+    pocheParole()
+    // devo anche controllare che non ci siano duplicati
+    words.sort((a,b) => b.answer.length - a.answer.length)
+    console.log("The Words:", words.map(w => w.answer))
 
-    WIDTH = words[0].answer.length
-    HEIGHT = WIDTH
-    cell_dim = createVector(width/WIDTH, height/HEIGHT)
-    for (let i = 0; i < HEIGHT; i++) {
-	let g_row = []
-	for (let j = 0; j < WIDTH; j++) {
-	    let content = ""
-	    g_row.push(content)
-	}
-	grid.push(g_row)
-    }
-    console.log(grid)
+    crosswords.push(new Crossword(words.map(w => w.answer), HORIZONTAL, SHUFFLE))
 }
 
 function draw()
 {
     background(0)
-    for (let i = 0; i < HEIGHT; i++) {
-	for (let j = 0; j < WIDTH; j++) {
-	    push()
-	    noFill()
-	    stroke(255)
-	    strokeWeight(2)
-	    rect(i*cell_dim.x, j*cell_dim.y, cell_dim.x, cell_dim.y)
-	    pop()
-	    
-	    push()
-	    fill(255)
-	    noStroke()
-	    textSize(30)
-	    text(grid[i][j], i*cell_dim.x+cell_dim.x/2-cell_dim.x/4+4, j*cell_dim.y+cell_dim.y/2+8)
-	    pop()
-	}
-    }
-
+    const c = crosswords[crosswords.length-1]
+    c.show()
 }
 
-const firstHorizontal = true
-function placeWord(i)
-{
-    const answer = words[i].answer
-    if (i == 0) {
-	for (let j = 0; j < answer.length; j++) {
-	    if (firstHorizontal) grid[j][0] = answer[j]
-	    else grid[0][j] = answer[j]
-	}
-    } else {
-	//TODO:
-	// - se c'è già quella coordinata con la stessa lettera ignorala
-	// - controlla quali coordinate sono valide
-	const coordinates = []
-	for (let j = 0; j < answer.length; j++) {
-	    for (let m_i = 0; m_i < HEIGHT; m_i++) {
-		for (let m_j = 0; m_j < WIDTH; m_j++) {
-		    if (grid[m_i][m_j] === answer[j]) {
-			coordinates.push({
-			    letter: answer[j],
-			    i: m_i,
-			    j: m_j
-			})
-		    }
-		}
-	    }
-	}
-	console.log(coordinates)
-    }
-}
 
-var i = 0
+//TODO ovviamente non è giusto, alcuni cw vengono segnati come done, anche se non lo sono chiaramente
+var iterations = 0
+var theChosens = []
 function mousePressed()
 {
-    placeWord(i)
-    i++
+    console.log(iterations+". Crosswords:", crosswords)
+    if (crosswords.length === 0) {
+	console.log("The Chosens:", theChosens)
+	return
+    }
+    for (let i = crosswords.length-1; i >= 0; i--) {
+	const c = crosswords[i]
+	if (c.done) {
+	    theChosens.push(c)
+	    crosswords.splice(i, 1)
+	} else if (!c.right) crosswords.splice(i, 1)
+	else c.advance()
+    }
+    iterations++
 }
