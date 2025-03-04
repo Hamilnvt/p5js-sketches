@@ -41,7 +41,19 @@ const rules_2 = {
 	[c], [c,s], [c]
     ]
 }
-const rules = rules_2
+const rules_3 = {
+  sand: [
+    [s],[s],[s],
+    [s],[s],[s],
+    [s],[s, c],[s]
+  ],
+  sea: [
+    [c],[c, s],[c],
+    [c],[c],[c],
+    [c],[c],[c]
+  ]
+}
+const rules = rules_3
 
 
 class Tile
