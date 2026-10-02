@@ -2,12 +2,9 @@
 // Created: gio 1 ott 2026, 21:36:01, CEST
 
 // TODO:
-// - make the angle 45 degrees
 // - draw vertical stick (in the comment)
 // - fix small visual problem: the sticks should have the same dimension when selected and not
-// - se il numero e' sbagliato ma esiste, farlo presente
-// - quando schiacci impara vanno deselezionati i segmenti e il numero
-// - indicatori spaziali
+// - bottone per togliere tutti i segmenti
 
 const STICK_WIDTH = 180
 const STICK_HEIGHT = 45
@@ -130,19 +127,30 @@ const numbers = [
     [true,  true,  true,  true,  false, true,  true],
 ]
 
-function set_sticks_to(n) {
+function set_sticks_to_number(n) {
+    for (let b of position_buttons)
+        b.is_on = false
     for (let i = 0; i < sticks.length; i++) {
         sticks[i].is_selected = numbers[n][i]
+        position_buttons[i].is_on = numbers[n][i]
     }
 }
 
 const BUTTON_WIDTH = 75
 const BUTTON_HEIGHT = 50
 let number_buttons
+let position_buttons
 
 function get_selected_number() {
     for (let b of number_buttons) {
         if (b.is_on) return int(b.label)
+    }
+    return -1
+}
+
+function get_selected_position() {
+    for (let i in position_buttons) {
+        if (position_buttons[i].is_on) return i
     }
     return -1
 }
@@ -176,14 +184,29 @@ function check() {
         checked_result.text = `${selected_number}, esatto!`
     } else {
         checked_result.value = RESULT_INCORRECT
-        checked_result.text = `No, questo non è ${selected_number}`
+        let written_number = -1
+        for (let i in numbers) {
+            const n = numbers[i]
+            let ok = true
+            for (let j = 0; j < sticks.length; j++) {
+                if (sticks[j].is_selected != n[j]) {
+                    ok = false
+                    break
+                }
+            }
+            if (ok) {
+                written_number = i
+                break
+            }
+        }
+        checked_result.text = `No, questo non è ${selected_number}` + ((written_number !== -1) ? `, ma è ${written_number}` : "")
     }
 }
 
-const MODE_SHOW  = 0
+const MODE_LEARN = 0
 const MODE_CHECK = 1
-let mode = MODE_SHOW
-let show_mode_button 
+let mode = MODE_LEARN
+let learn_mode_button 
 let check_mode_button 
 
 class Button {
@@ -228,17 +251,37 @@ function create_number_buttons() {
     }
 }
 
+function create_position_buttons() {
+    position_buttons = []
+    const x = 650
+    const y = 100
+    const positions = [
+        "Alto",
+        "Alto-Destra",
+        "Basso-Destra",
+        "Basso",
+        "Basso-Sinistra",
+        "Alto-Sinistra",
+        "Centro"
+    ]
+    for (let i in positions) {
+        const p = positions[i]
+        position_buttons.push(new Button(x, y+i*BUTTON_HEIGHT, p))
+    }
+}
+
 function setup() {
     createCanvas(windowWidth, windowHeight)
 
     create_sticks_at(100, 25)
     create_number_buttons()
+    create_position_buttons()
 
     check_button      = new Button(500, 100+(number_buttons.length+1)*BUTTON_HEIGHT, "Controlla")
-    show_mode_button  = new Button(800, 100, "Impara")
+    learn_mode_button  = new Button(800, 100, "Impara")
     check_mode_button = new Button(800, 200, "Controlla")
 
-    show_mode_button.is_on = true
+    learn_mode_button.is_on = true
 }
 
 function draw() {
@@ -252,10 +295,14 @@ function draw() {
         button.draw()
     }
 
+    for (let button of position_buttons) {
+        button.draw()
+    }
+
     if (mode == MODE_CHECK) {
         check_button.draw()
     }
-    show_mode_button.draw()
+    learn_mode_button.draw()
     check_mode_button.draw()
 
     if (mode == MODE_CHECK) {
@@ -280,25 +327,45 @@ function mousePressed() {
     if (check_mode_button.is_hovered()) {
         mode = MODE_CHECK
         check_mode_button.is_on = true
-        show_mode_button.is_on = false
+        learn_mode_button.is_on = false
         checked_result.text = ""
-        for (let stick of sticks) {
+
+        for (let stick of sticks)
             stick.is_selected = false
-        }
-    } else if (show_mode_button.is_hovered()) {
-        mode = MODE_SHOW
-        show_mode_button.is_on = true
+
+        for (let b of number_buttons)
+            b.is_on = false
+
+        for (let b of position_buttons)
+            b.is_on = false
+    } else if (learn_mode_button.is_hovered()) {
+        mode = MODE_LEARN
+        learn_mode_button.is_on = true
         check_mode_button.is_on = false
+
+        for (let stick of sticks)
+            stick.is_selected = false
+
+        for (let b of number_buttons)
+            b.is_on = false
     }
 
-    if (mode == MODE_SHOW) {
+    if (mode == MODE_LEARN) {
 
         for (let button of number_buttons) {
             if (button.is_hovered()) {
-                set_sticks_to(int(button.label))
+                set_sticks_to_number(int(button.label))
                 for (let b of number_buttons)
                     b.is_on = false
                 button.is_on = true
+            }
+        }
+
+        for (let i in position_buttons) {
+            const button = position_buttons[i]
+            if (button.is_hovered()) {
+                sticks[i].is_selected = !sticks[i].is_selected
+                button.is_on = !button.is_on
             }
         }
 
@@ -310,6 +377,15 @@ function mousePressed() {
                 for (let b of number_buttons)
                     b.is_on = false
                 button.is_on = true
+            }
+        }
+
+        for (let i in position_buttons) {
+            const button = position_buttons[i]
+            if (button.is_hovered()) {
+                checked_result.text = ""
+                sticks[i].is_selected = !sticks[i].is_selected
+                button.is_on = !button.is_on
             }
         }
 
